@@ -1,0 +1,4 @@
+todos:
+- add entries with varying set of mandatory and/or optional fields
+- edit entries, support changing type
+- generate bibtex code
