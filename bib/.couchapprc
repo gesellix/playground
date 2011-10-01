@@ -1,0 +1,13 @@
+{
+"env" : {
+    "default" : {
+      "db" : "http://gesellix.iriscouch.com/bib"
+    },
+    "prod" : {
+      "db" : "http://gesellix.iriscouch.com/bib"
+    },
+    "dev" : {
+      "db" : "http://gesellix.iriscouch.com/bib"
+    }
+  }
+}

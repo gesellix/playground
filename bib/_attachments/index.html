@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bibliography on CouchDB</title>
+    <link rel="stylesheet" href="style/main.css">
+</head>
+<body>
+<div id="session">
+</div>
+<div id="footer">
+    &copy;
+    <!--<img src="images/gesellix_logo.png" alt="logo"/>-->
+    <a href="http://www.gesellix.de/" target="_blank">Tobias Gesellchen</a>
+</div>
+<div>
+    <div id="options">
+        <a href="#createNewEntry" id="link_createNewEntry">Create a new entry</a>
+    </div>
+    <div id="createNewEntry" style="display: none;">
+        <form id="newEntry" action="#">
+            <label for="selectEntryType">Select entry type:</label>
+            <select id="selectEntryType" name="entryType">
+                <option value="Default">Please select...</option>
+                <option value="Book">book</option>
+                <option value="Journal">journal</option>
+                <option value="Url">url</option>
+            </select>
+            <div id="entryDetailsForBook" class="initiallyHidden">
+                <input type="hidden" name="type" value="Book" class="docAttribute"/>
+                <label>
+                    Title:
+                    <input type="text" name="title" value="BookTitle" class="docAttribute"/>
+                </label>
+            </div>
+            <div id="entryDetailsForJournal" class="initiallyHidden">
+                <input type="hidden" name="type" value="Journal" class="docAttribute"/>
+                <label>
+                    Title:
+                    <input type="text" name="title" value="JournalTitle" class="docAttribute"/>
+                </label>
+            </div>
+            <div id="entryDetailsForUrl" class="initiallyHidden">
+                <input type="hidden" name="type" value="Url" class="docAttribute"/>
+                <label>
+                    Title
+                    <input type="text" name="title" value="UrlTitle" class="docAttribute"/>
+                </label>
+            </div>
+            <div id="entryButtons" class="initiallyHidden">
+                <input type="submit" id="submitNewEntry" value="submit"/>
+                <input type="button" name="cancel" id="cancelNewEntry" value="cancel"/>
+            </div>
+        </form>
+        <div id="saveResult">
+        </div>
+    </div>
+    <div id="showEntries">
+    </div>
+</div>
+</body>
+<script src="scripts/jquery-1.6.1.min.js"></script>
+<script src="scripts/jquery.couch.js"></script>
+<script src="scripts/app.js"></script>
+</html>
