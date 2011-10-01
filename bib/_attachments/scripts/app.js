@@ -1,4 +1,58 @@
 var $db = '';
+var $currentUser = undefined;
+
+var refreshEntries = function() {
+    $('div#bibliography').empty();
+    $('div#createNewEntry').hide();
+    $('div#saveResult').hide();
+
+    if ($currentUser) {
+        $db.view("bibliography/bibliography", {
+            success:function(data) {
+                $.each(data.rows, function(index, row) {
+                    var entry = row.value;
+                    if ($currentUser == entry.owner) {
+                        var rowItem = $('<li></li>');
+                        rowItem.append('<input type="hidden" class="docID" id="bibEntry_' + entry._id + '" value="' + entry._id + '" />');
+                        rowItem.append('<h2>' + entry.type + '</h2>');
+                        var properties = $('<ul></ul>');
+                        $.each(Object.keys(entry), function(index, attributeName) {
+                            if (attributeName != "_id"
+                                && attributeName != "_rev"
+                                && attributeName != "owner"
+                                && attributeName != "type") {
+                                properties.append($('<li></li>').append(entry[attributeName]));
+                            }
+                        });
+                        rowItem.append(properties);
+
+                        $('div#bibliography').append(rowItem);
+                    }
+                });
+            }
+        });
+    }
+};
+
+var onUserLoggedIn = function(data) {
+// show logged in user name and logout button
+    $('#session').html(
+        'logged in as ' + data.userCtx.name + ' ' +
+            '<input type="submit" name="logOut" value="sign out"/>' +
+            '<input type="hidden" id="username" value="' + data.userCtx.name + '" />');
+    refreshEntries();
+};
+
+var onUserLoggedOut = function() {
+// show logon form
+    $('#session').html(
+        '<form action="#">' +
+            '<label for="username">username</label><input type="text" name="username">' +
+            '<label for="password">password</label><input type="password" name="password">' +
+            '<input type="submit" name="logIn" value="log in"/>' +
+            '</form>');
+    refreshEntries();
+};
 
 $(document).ready(function() {
 
@@ -8,35 +62,24 @@ $(document).ready(function() {
     $.couch.session({
         success: function(data) {
             if (data.userCtx.name != null) {
-                // show logged in user name and logout button
-                $('#session').html(
-                    'logged in as ' + data.userCtx.name + ' ' +
-                        '<input type="submit" name="logOut" value="sign out"/>' +
-                        '<input type="hidden" id="username" value="' + data.userCtx.name + '" />');
+                $currentUser = data.userCtx.name;
+                onUserLoggedIn(data);
             }
             else {
-                // show logon form
-                $('#session').html(
-                    '<form action="#">' +
-                        '<label for="username">username</label><input type="text" name="username">' +
-                        '<label for="password">password</label><input type="password" name="password">' +
-                        '<input type="submit" name="logIn" value="log in"/>' +
-                        '</form>');
+                $currentUser = null;
+                onUserLoggedOut();
             }
         },
         error: function(data) {
-            // show logon form
-            $('#session').html(
-                '<form action="#">' +
-                    '<label for="username">username</label><input type="text" name="username">' +
-                    '<label for="password">password</label><input type="password" name="password">' +
-                    '<input type="submit" name="logIn" value="log in"/>' +
-                    '</form>');
+            $currentUser = null;
+            onUserLoggedOut();
         }
     });
 
     $('a#link_createNewEntry').live('click', function(evt) {
         $('div#createNewEntry').fadeIn();
+        $('select#selectEntryType').val("Default");
+        $('select#selectEntryType').trigger('change', $('select#selectEntryType').val());
     });
 
     $('input#cancelNewEntry').live('click', function(evt) {
@@ -49,6 +92,11 @@ $(document).ready(function() {
 
         var newEntryTypeSelection = $(this).val();
         if ('Default' != newEntryTypeSelection) {
+            var docAttributes = $('div#entryDetailsFor' + newEntryTypeSelection + ' input[type="text"].docAttribute');
+            docAttributes.each(function() {
+                $(this).val('');
+            });
+
             $('div#entryDetailsFor' + newEntryTypeSelection).fadeIn();
             $('div#entryButtons').fadeIn();
         }
@@ -59,7 +107,7 @@ $(document).ready(function() {
 
         var JSONdoc = {};
 //        JSONdoc._id = undefined;
-        JSONdoc.owner = $('#username').val();
+        JSONdoc.owner = $currentUser;
 
         var docAttributes = $('div#entryDetailsFor' + $('#selectEntryType').val() + ' input.docAttribute');
         docAttributes.each(function() {
@@ -70,6 +118,7 @@ $(document).ready(function() {
 
         $db.saveDoc(JSONdoc, {
             success: function(doc) {
+                refreshEntries();
                 $('#saveResult').replaceWith('<p>document ' + JSONdoc._id + ' was successfully updated</p>');
             },
             error: function(jqXHR, textStatus, errorThrown) {
@@ -98,8 +147,8 @@ $(document).ready(function() {
                 $.couch.session({
                     success: function(data) {
                         if (data.userCtx.name != null) {
-                            // replace login form by user name
-                            $('#session').html('logged in as ' + data.userCtx.name + ' <input type="submit" name="logOut" value="log out"/>');
+                            $currentUser = data.userCtx.name;
+                            onUserLoggedIn(data);
                         }
                     }
                 });
@@ -114,8 +163,9 @@ $(document).ready(function() {
 
         // log the user out
         $.couch.logout();
+        $currentUser = null;
 
         // restore login form
-        $('#session').html('<form action="#"><label for="username">username</label><input type="text" name="username"/><label for="password">password</label><input type="password" name="password"/><input type="submit" name="logIn" value="log in"/></form>');
+        onUserLoggedOut();
     });
 });
