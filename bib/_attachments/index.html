@@ -14,37 +14,51 @@
 </div>
 <div>
     <div id="options">
-        <a href="#createNewEntry" id="link_createNewEntry">Create a new entry</a>
+        <a href="#createNewEntry" id="link_createNewEntry" style="display: none;">Create a new entry</a>
     </div>
     <div id="createNewEntry" style="display: none;">
         <form id="newEntry" action="#">
             <label for="selectEntryType">Select entry type:</label>
             <select id="selectEntryType" name="entryType">
                 <option value="Default">Please select...</option>
+                <option value="Article">article</option>
                 <option value="Book">book</option>
                 <option value="Journal">journal</option>
                 <option value="Url">url</option>
             </select>
+            <div id="entryDetailsForArticle" class="initiallyHidden">
+                <input type="hidden" name="type" value="Article" class="docAttribute"/>
+                <br /><label>Author: <input type="text" name="author" value="" class="docAttribute"/></label>
+                <br /><label>Title: <input type="text" name="title" value="" class="docAttribute"/></label>
+                <br /><label>Journal: <input type="text" name="journal" value="" class="docAttribute"/></label>
+                <br /><label>Year: <input type="text" name="year" value="" class="docAttribute"/></label>
+
+                <br /><label>Volume: <input type="text" name="volume" value="" class="docAttribute"/></label>
+                <br /><label>Number: <input type="text" name="number" value="" class="docAttribute"/></label>
+                <br /><label>Pages: <input type="text" name="pages" value="" class="docAttribute"/></label>
+                <br /><label>Month: <input type="text" name="month" value="" class="docAttribute"/></label>
+                <br /><label>Note: <input type="text" name="note" value="" class="docAttribute"/></label>
+            </div>
             <div id="entryDetailsForBook" class="initiallyHidden">
                 <input type="hidden" name="type" value="Book" class="docAttribute"/>
-                <label>
-                    Title:
-                    <input type="text" name="title" value="BookTitle" class="docAttribute"/>
-                </label>
+                <br /><label>Author/<br/>Editor: <input type="text" name="author" value="" class="docAttribute"/></label>
+                <br /><label>Editor: <input type="text" name="editor" value="" class="docAttribute"/></label>
+                <br /><label>Title: <input type="text" name="title" value="" class="docAttribute"/></label>
+                <br /><label>Publisher: <input type="text" name="publisher" value="" class="docAttribute"/></label>
+                <br /><label>Year: <input type="text" name="year" value="" class="docAttribute"/></label>
+
+                <br /><label>Volume: <input type="text" name="volume" value="" class="docAttribute"/></label>
+                <br /><label>Number: <input type="text" name="number" value="" class="docAttribute"/></label>
+                <br /><label>Month: <input type="text" name="month" value="" class="docAttribute"/></label>
+                <br /><label>Note: <input type="text" name="note" value="" class="docAttribute"/></label>
             </div>
             <div id="entryDetailsForJournal" class="initiallyHidden">
                 <input type="hidden" name="type" value="Journal" class="docAttribute"/>
-                <label>
-                    Title:
-                    <input type="text" name="title" value="JournalTitle" class="docAttribute"/>
-                </label>
+                <br /><label>Title: <input type="text" name="title" value="" class="docAttribute"/></label>
             </div>
             <div id="entryDetailsForUrl" class="initiallyHidden">
                 <input type="hidden" name="type" value="Url" class="docAttribute"/>
-                <label>
-                    Title
-                    <input type="text" name="title" value="UrlTitle" class="docAttribute"/>
-                </label>
+                <br /><label>Title: <input type="text" name="title" value="" class="docAttribute"/></label>
             </div>
             <div id="entryButtons" class="initiallyHidden">
                 <input type="submit" id="submitNewEntry" value="submit"/>

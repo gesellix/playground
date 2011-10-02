@@ -1,12 +1,309 @@
 var $db = '';
 var $currentUser = undefined;
+var attributesByType = {
+    article : {
+        type: "Article",
+        description: "Artikel aus einer (wissenschaftlichen) Zeitschrift oder einen Journal",
+        attributes: {
+            mandatory: {
+                author: "Author",
+                title: "Title",
+                journal: "Journal",
+                year: "Year"
+            },
+            optional: {
+                volume: "Volume",
+                number: "Number",
+                pages: "Pages",
+                month: "Month",
+                note: "Note"
+            }
+        }
+    },
+    book : {
+        type: "Book",
+        description: "Buch, das eine Verlagsangabe besitzt",
+        attributes: {
+            mandatory: {
+                author: "Author",
+                editor: "Editor",
+                title: "Title",
+                publisher: "Publisher",
+                year: "Year"
+            },
+            optional: {
+                volume: "Volume",
+                number: "Number",
+                series: "Series",
+                address: "Address",
+                edition: "Edition",
+                month: "Month",
+                note: "Note"
+            }
+        }
+    },
+    booklet : {
+        type: "Booklet",
+        description: "Ein Werk, das zwar gedruckt und gebunden, aber ohne Angabe eines Verlages oder einer entsprechenden Institution ist",
+        attributes: {
+            mandatory: {
+                title: "Title"
+            },
+            optional: {
+                author: "Author",
+                howpublished: "How Published",
+                address: "Address",
+                month: "Month",
+                year: "Year",
+                note: "Note"
+            }
+        }
+    },
+    inbook : {
+        type: "In book",
+        description: "Teil eines Buches mit Angabe eines Abschnitts oder Seitenbereichs",
+        attributes: {
+            mandatory: {
+                author: "Author",
+                editor: "Editor",
+                title: "Title",
+                chapter: "Chapter",
+                pages: "Pages",
+                publisher: "Publisher",
+                year: "Year"
+            },
+            optional: {
+                volume: "Volume",
+                number: "Number",
+                series: "Series",
+                inbookType: "Type",
+                address: "Address",
+                edition: "Edition",
+                month: "Month",
+                note: "Note"
+            }
+        }
+    },
+    incollection : {
+        type: "In collection",
+        description: "Teil eines Buches mit einem eigenen Titel",
+        attributes: {
+            mandatory: {
+                author: "Author",
+                title: "Title",
+                bookTitle: "Booktitle",
+                publisher: "Publisher",
+                year: "Year"
+            },
+            optional: {
+                editor: "Editor",
+                volume: "Volume",
+                number: "Number",
+                series: "Series",
+                incollectionType: "Type",
+                chapter: "Chapter",
+                pages: "Pages",
+                address: "Address",
+                edition: "Edition",
+                month: "Month",
+                note: "Note"
+            }
+        }
+    },
+    inproceedings : {
+        type: "In proceedings",
+        description: "Artikel in einem Konferenzband",
+        attributes: {
+            mandatory: {
+            },
+            optional: {
+                author: "Author",
+                howpublished: "How Published",
+                address: "Address",
+                month: "Month",
+                year: "Year",
+                note: "Note",
+                title: "Title",
+                edition: "Edition",
+                publisher: "Publisher",
+                editor: "Editor",
+                volume: "Volume",
+                number: "Number",
+                series: "Series"
+            }
+        }
+    },
+    manual : {
+        type: "Manual",
+        description: "Technische Dokumentation oder Anleitung",
+        attributes: {
+            mandatory: {
+            },
+            optional: {
+                author: "Author",
+                howpublished: "How Published",
+                address: "Address",
+                month: "Month",
+                year: "Year",
+                note: "Note",
+                title: "Title",
+                edition: "Edition",
+                publisher: "Publisher",
+                editor: "Editor",
+                volume: "Volume",
+                number: "Number",
+                series: "Series"
+            }
+        }
+    },
+    masterthesis : {
+        type: "Master thesis",
+        description: "Diplomarbeit",
+        attributes: {
+            mandatory: {
+            },
+            optional: {
+                author: "Author",
+                howpublished: "How Published",
+                address: "Address",
+                month: "Month",
+                year: "Year",
+                note: "Note",
+                title: "Title",
+                edition: "Edition",
+                publisher: "Publisher",
+                editor: "Editor",
+                volume: "Volume",
+                number: "Number",
+                series: "Series"
+            }
+        }
+    },
+    misc : {
+        type: "Misc",
+        description: "Alles, was sonst nicht passt",
+        attributes: {
+            mandatory: {
+            },
+            optional: {
+                author: "Author",
+                howpublished: "How Published",
+                address: "Address",
+                month: "Month",
+                year: "Year",
+                note: "Note",
+                title: "Title",
+                edition: "Edition",
+                publisher: "Publisher",
+                editor: "Editor",
+                volume: "Volume",
+                number: "Number",
+                series: "Series"
+            }
+        }
+    },
+    phdthesis : {
+        type: "Ph.D. thesis",
+        description: "Doktorarbeit",
+        attributes: {
+            mandatory: {
+            },
+            optional: {
+                author: "Author",
+                howpublished: "How Published",
+                address: "Address",
+                month: "Month",
+                year: "Year",
+                note: "Note",
+                title: "Title",
+                edition: "Edition",
+                publisher: "Publisher",
+                editor: "Editor",
+                volume: "Volume",
+                number: "Number",
+                series: "Series"
+            }
+        }
+    },
+    proceedings : {
+        type: "proceedings",
+        description: "Konferenzbericht",
+        attributes: {
+            mandatory: {
+            },
+            optional: {
+                author: "Author",
+                howpublished: "How Published",
+                address: "Address",
+                month: "Month",
+                year: "Year",
+                note: "Note",
+                title: "Title",
+                edition: "Edition",
+                publisher: "Publisher",
+                editor: "Editor",
+                volume: "Volume",
+                number: "Number",
+                series: "Series"
+            }
+        }
+    },
+    techreport : {
+        type: "techreport",
+        description: "Bericht einer Hochschule oder ähnlichen Institution, der meist in einer Reihe erscheint",
+        attributes: {
+            mandatory: {
+            },
+            optional: {
+                author: "Author",
+                howpublished: "How Published",
+                address: "Address",
+                month: "Month",
+                year: "Year",
+                note: "Note",
+                title: "Title",
+                edition: "Edition",
+                publisher: "Publisher",
+                editor: "Editor",
+                volume: "Volume",
+                number: "Number",
+                series: "Series"
+            }
+        }
+    },
+    unpublished : {
+        type: "unpublished",
+        description: "Dokument eines Autors mit einem Titel, das aber nicht veröffentlicht wurde",
+        attributes: {
+            mandatory: {
+            },
+            optional: {
+                author: "Author",
+                howpublished: "How Published",
+                address: "Address",
+                month: "Month",
+                year: "Year",
+                note: "Note",
+                title: "Title",
+                edition: "Edition",
+                publisher: "Publisher",
+                editor: "Editor",
+                volume: "Volume",
+                number: "Number",
+                series: "Series"
+            }
+        }
+    }
+};
 
 var refreshEntries = function() {
     $('div#bibliography').empty();
     $('div#createNewEntry').hide();
     $('div#saveResult').hide();
+    $('a#link_createNewEntry').hide();
 
     if ($currentUser) {
+        $('a#link_createNewEntry').show();
         $db.view("bibliography/bibliography", {
             success:function(data) {
                 $.each(data.rows, function(index, row) {
