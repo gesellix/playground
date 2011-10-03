@@ -44,3 +44,27 @@ div#session > form > input[type="text"], div#session > form > input[type="passwo
     right: 25px;
     padding-bottom: 5px;
 }
+
+div#entryButtons {
+    position: absolute;
+    left: 10em;
+    margin-top: 5ex;
+}
+
+.docAttribute {
+    position: absolute;
+    left: 10em;
+    border: 2px solid;
+}
+
+.mandatoryField {
+    border-color: #f08080;
+}
+
+.optionalField {
+    border-color: #20b2aa;
+}
+
+div#bibliography {
+    margin-top: 7ex;
+}
