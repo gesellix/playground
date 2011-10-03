@@ -1,6 +1,6 @@
 var $db = '';
 var $currentUser = undefined;
-var attributesByType = {
+var entryTypes = {
     article : {
         type: "Article",
         description: "Artikel aus einer (wissenschaftlichen) Zeitschrift oder einen Journal",
@@ -115,21 +115,22 @@ var attributesByType = {
         description: "Artikel in einem Konferenzband",
         attributes: {
             mandatory: {
+                author: "Author",
+                title: "Title",
+                booktitle: "Booktitle",
+                year: "Year"
             },
             optional: {
-                author: "Author",
-                howpublished: "How Published",
-                address: "Address",
-                month: "Month",
-                year: "Year",
-                note: "Note",
-                title: "Title",
-                edition: "Edition",
-                publisher: "Publisher",
                 editor: "Editor",
                 volume: "Volume",
                 number: "Number",
-                series: "Series"
+                series: "Series",
+                pages: "Pages",
+                address: "Address",
+                month: "Month",
+                organisation: "Organisation",
+                publisher: "Publisher",
+                note: "Note"
             }
         }
     },
@@ -138,21 +139,15 @@ var attributesByType = {
         description: "Technische Dokumentation oder Anleitung",
         attributes: {
             mandatory: {
+                title: "Title"
             },
             optional: {
                 author: "Author",
-                howpublished: "How Published",
                 address: "Address",
                 month: "Month",
+                organisation: "Organisation",
                 year: "Year",
-                note: "Note",
-                title: "Title",
-                edition: "Edition",
-                publisher: "Publisher",
-                editor: "Editor",
-                volume: "Volume",
-                number: "Number",
-                series: "Series"
+                note: "Note"
             }
         }
     },
@@ -161,21 +156,16 @@ var attributesByType = {
         description: "Diplomarbeit",
         attributes: {
             mandatory: {
+                author: "Author",
+                title: "Title",
+                school: "School",
+                year: "Year"
             },
             optional: {
-                author: "Author",
-                howpublished: "How Published",
+                masterthesisType: "Type",
                 address: "Address",
                 month: "Month",
-                year: "Year",
-                note: "Note",
-                title: "Title",
-                edition: "Edition",
-                publisher: "Publisher",
-                editor: "Editor",
-                volume: "Volume",
-                number: "Number",
-                series: "Series"
+                note: "Note"
             }
         }
     },
@@ -187,18 +177,11 @@ var attributesByType = {
             },
             optional: {
                 author: "Author",
+                title: "Title",
                 howpublished: "How Published",
-                address: "Address",
                 month: "Month",
                 year: "Year",
-                note: "Note",
-                title: "Title",
-                edition: "Edition",
-                publisher: "Publisher",
-                editor: "Editor",
-                volume: "Volume",
-                number: "Number",
-                series: "Series"
+                note: "Note"
             }
         }
     },
@@ -207,93 +190,123 @@ var attributesByType = {
         description: "Doktorarbeit",
         attributes: {
             mandatory: {
+                author: "Author",
+                title: "Title",
+                school: "School",
+                year: "Year"
             },
             optional: {
-                author: "Author",
-                howpublished: "How Published",
+                masterthesisType: "Type",
                 address: "Address",
                 month: "Month",
-                year: "Year",
-                note: "Note",
-                title: "Title",
-                edition: "Edition",
-                publisher: "Publisher",
-                editor: "Editor",
-                volume: "Volume",
-                number: "Number",
-                series: "Series"
+                note: "Note"
             }
         }
     },
     proceedings : {
-        type: "proceedings",
+        type: "Proceedings",
         description: "Konferenzbericht",
         attributes: {
             mandatory: {
+                title: "Title",
+                year: "Year"
             },
             optional: {
-                author: "Author",
-                howpublished: "How Published",
-                address: "Address",
-                month: "Month",
-                year: "Year",
-                note: "Note",
-                title: "Title",
-                edition: "Edition",
-                publisher: "Publisher",
                 editor: "Editor",
                 volume: "Volume",
                 number: "Number",
-                series: "Series"
+                series: "Series",
+                address: "Address",
+                month: "Month",
+                organisation: "Organisation",
+                publisher: "Publisher",
+                note: "Note"
             }
         }
     },
     techreport : {
-        type: "techreport",
+        type: "Techreport",
         description: "Bericht einer Hochschule oder ähnlichen Institution, der meist in einer Reihe erscheint",
         attributes: {
             mandatory: {
+                author: "Author",
+                title: "Title",
+                institution: "Institution",
+                year: "Year"
             },
             optional: {
-                author: "Author",
-                howpublished: "How Published",
+                techreportType: "Type",
+                number: "Number",
                 address: "Address",
                 month: "Month",
-                year: "Year",
-                note: "Note",
-                title: "Title",
-                edition: "Edition",
-                publisher: "Publisher",
-                editor: "Editor",
-                volume: "Volume",
-                number: "Number",
-                series: "Series"
+                note: "Note"
             }
         }
     },
     unpublished : {
-        type: "unpublished",
+        type: "Unpublished",
         description: "Dokument eines Autors mit einem Titel, das aber nicht veröffentlicht wurde",
         attributes: {
             mandatory: {
+                author: "Author",
+                title: "Title",
+                note: "Note"
             },
             optional: {
-                author: "Author",
-                howpublished: "How Published",
-                address: "Address",
                 month: "Month",
-                year: "Year",
-                note: "Note",
-                title: "Title",
-                edition: "Edition",
-                publisher: "Publisher",
-                editor: "Editor",
-                volume: "Volume",
-                number: "Number",
-                series: "Series"
+                year: "Year"
             }
         }
     }
+};
+
+var initializeSelections = function() {
+    var selections = $('<select id="selectEntryType" name="entryType">');
+    selections.append('<option value="Default">Please select...</option>');
+    $.each(entryTypes, function(fieldname, field) {
+        selections.append('<option value="' + fieldname + '">' + field.type + '</option>');
+    });
+    var typeSelection = $('div#typeSelection');
+    typeSelection.append('<label for="selectEntryType">Select entry type:</label>');
+    typeSelection.append(selections);
+};
+
+var generateEntryTemplate = function(entryType) {
+    var typeAttribute = $('<input type="hidden" name="type" />');
+    typeAttribute.addClass("docAttribute");
+    typeAttribute.val(entryType.type);
+
+    var entryDetails = $('<div></div>');
+    entryDetails.attr("id", "entryDetailsFor" + entryType.type);
+    entryDetails.append(typeAttribute);
+
+    $.each(entryType.attributes.mandatory, function(fieldname, fieldlabel) {
+        var inputField = $('<input type="text" name="' + fieldname + '" />');
+        inputField.addClass("docAttribute");
+        inputField.addClass("mandatoryField");
+
+        var label = $("<label></label>");
+        label.append(fieldlabel + ": ");
+        label.append(inputField);
+
+        entryDetails.append("<br />");
+        entryDetails.append(label);
+    });
+
+    $.each(entryType.attributes.optional, function(fieldname, fieldlabel) {
+        var inputField = $('<input type="text" name="' + fieldname + '" />');
+        inputField.addClass("docAttribute");
+        inputField.addClass("optionalField");
+
+        var label = $("<label></label>");
+        label.append(fieldlabel + ": ");
+        label.append(inputField);
+
+        entryDetails.append("<br />");
+        entryDetails.append(label);
+    });
+    console.log(entryDetails.get(0).outerHTML);
+    return entryDetails;
 };
 
 var refreshEntries = function() {
@@ -318,7 +331,7 @@ var refreshEntries = function() {
                                 && attributeName != "_rev"
                                 && attributeName != "owner"
                                 && attributeName != "type") {
-                                properties.append($('<li></li>').append(entry[attributeName]));
+                                properties.append($('<li></li>').append(attributeName + ": " + entry[attributeName]));
                             }
                         });
                         rowItem.append(properties);
@@ -373,6 +386,8 @@ $(document).ready(function() {
         }
     });
 
+    initializeSelections();
+
     $('a#link_createNewEntry').live('click', function(evt) {
         $('div#createNewEntry').fadeIn();
         $('select#selectEntryType').val("Default");
@@ -385,16 +400,13 @@ $(document).ready(function() {
 
     $('select#selectEntryType').live('change', function(evt) {
 
-        $('form#newEntry > div.initiallyHidden').hide();
+        var entryContainer = $('form#newEntry div#entryContainer');
+        entryContainer.empty();
 
         var newEntryTypeSelection = $(this).val();
         if ('Default' != newEntryTypeSelection) {
-            var docAttributes = $('div#entryDetailsFor' + newEntryTypeSelection + ' input[type="text"].docAttribute');
-            docAttributes.each(function() {
-                $(this).val('');
-            });
-
-            $('div#entryDetailsFor' + newEntryTypeSelection).fadeIn();
+            var attributeContainer = generateEntryTemplate(entryTypes[newEntryTypeSelection]);
+            entryContainer.append(attributeContainer);
             $('div#entryButtons').fadeIn();
         }
     });
@@ -406,7 +418,7 @@ $(document).ready(function() {
 //        JSONdoc._id = undefined;
         JSONdoc.owner = $currentUser;
 
-        var docAttributes = $('div#entryDetailsFor' + $('#selectEntryType').val() + ' input.docAttribute');
+        var docAttributes = $('div#entryContainer input.docAttribute');
         docAttributes.each(function() {
             var docAttribute = $(this);
             var attributeName = docAttribute.get(0).name;
