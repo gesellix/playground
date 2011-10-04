@@ -28,7 +28,7 @@ var generateAdditionalFields = function() {
     labelUrl.append(additionalUrl);
 
     var additionalFile = $('<input type="file" name="_attachments" />');
-    additionalFile.addClass('docAttribute');
+    additionalFile.addClass('docAttachments');
     var labelFile = $("<label></label>");
     labelFile.append("File: ");
     labelFile.append(additionalFile);
@@ -44,6 +44,13 @@ var generateAdditionalFields = function() {
 };
 
 var generateEntry = function(entryType) {
+    var revAttribute = $('<input type="hidden" name="_rev" />');
+    revAttribute.addClass('docAttribute');
+
+    var ownerAttribute = $('<input type="hidden" name="owner" />');
+    ownerAttribute.addClass('docAttribute');
+    ownerAttribute.val($currentUser);
+
     var typeAttribute = $('<input type="hidden" name="type" />');
     typeAttribute.addClass('docAttribute');
     typeAttribute.val(entryType.type);
@@ -52,6 +59,8 @@ var generateEntry = function(entryType) {
     entryDetails.attr("id", "entryDetailsFor" + entryType.type);
     entryDetails.append($('<p></p>').append(entryType.description));
     entryDetails.append(typeAttribute);
+    entryDetails.append(ownerAttribute);
+//    entryDetails.append(revAttribute);
 
     $.each(entryType.attributes.mandatory, function(fieldname, fieldlabel) {
         var inputField = $('<input type="text" name="' + fieldname + '" />');
@@ -78,7 +87,6 @@ var generateEntry = function(entryType) {
         entryDetails.append("<br />");
         entryDetails.append(label);
     });
-    console.log(entryDetails.get(0).outerHTML);
     return entryDetails;
 };
 
@@ -178,7 +186,7 @@ $(document).ready(function() {
         var newEntryTypeSelection = $(this).val();
         if ('Default' != newEntryTypeSelection) {
             entryContainer.append(generateEntry(entryTypes[newEntryTypeSelection]));
-//            entryContainer.append(generateAdditionalFields());
+            entryContainer.append(generateAdditionalFields());
 
             $('div#entryButtons').fadeIn();
         }
@@ -189,7 +197,7 @@ $(document).ready(function() {
 
         var JSONdoc = {};
 //        JSONdoc._id = undefined;
-        JSONdoc.owner = $currentUser;
+//        JSONdoc.owner = $currentUser;
 
         var docAttributes = $('div#entryContainer input.docAttribute');
         docAttributes.each(function() {
@@ -202,9 +210,34 @@ $(document).ready(function() {
         $db.saveDoc(JSONdoc, {
             success: function(doc) {
                 $('div#entryButtons').hide();
-                refreshEntries();
-                $('#saveResult').append('<p>document ' + JSONdoc._id + ' was successfully updated</p>');
+
+                $('#saveResult').append('<p>document ' + JSONdoc._id + ' was successfully created, uploading attachments...</p>');
                 $('#saveResult').fadeIn();
+
+                var attachments = $('div#entryContainer input.docAttachments');
+                if (attachments.size() > 0) {
+                    var attachmentForm = $('<form style="display: none;" action="" id="attachmentUploadForm"></form>');
+                    $('div#createNewEntry').append(attachmentForm);
+                    attachments.each(function(index, entry) {
+                        attachmentForm.append($(this));
+                    });
+                    attachmentForm.append('<input type="hidden" name="_rev" value="' + JSONdoc._rev + '" />');
+                    var options = {
+                        url: $db.uri + $.couch.encodeDocId(JSONdoc._id),
+                        type: 'post',
+                        dataType: 'json'
+                    };
+                    attachmentForm.submit(function() {
+                        $(this).ajaxSubmit(options);
+                        return false;
+                    });
+                    attachmentForm.submit();
+                }
+
+                $('#saveResult').empty();
+                $('#saveResult').append('<p>document ' + JSONdoc._id + ' was successfully updated</p>');
+
+                refreshEntries();
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 $('#saveResult').append('<p>Error updating document ' + JSONdoc._id + ': ' + jqXHR + ' ' + textStatus + ' - ' + errorThrown + '</p>');

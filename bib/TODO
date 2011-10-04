@@ -1,9 +1,9 @@
 todos:
 / add entries with varying set of mandatory and/or optional fields
 / only present valid fields
-- upload file (PDF)
+/ add notes
 - add link to source
+- upload file (PDF)
 - add tags, optional subtags (like tag.subtag.subtag?)
-- add notes
 - edit entries, support changing type
 - generate bibtex code
