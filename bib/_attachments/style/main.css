@@ -57,6 +57,12 @@ div#entryButtons {
     border: 2px solid;
 }
 
+.docAttachments {
+    position: absolute;
+    left: 10em;
+    border: 2px solid;
+}
+
 .mandatoryField {
     border-color: #f08080;
 }

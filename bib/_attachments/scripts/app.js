@@ -1,95 +1,6 @@
 var $db = '';
 var $currentUser = undefined;
 
-var initializeSelections = function() {
-    var selections = $('<select id="selectEntryType" name="entryType">');
-    selections.append('<option value="Default">Please select...</option>');
-    $.each(entryTypes, function(fieldname, field) {
-        selections.append('<option value="' + fieldname + '">' + field.type + '</option>');
-    });
-    var typeSelection = $('div#typeSelection');
-    typeSelection.append('<label for="selectEntryType">Select entry type:</label>');
-    typeSelection.append(selections);
-};
-
-var generateAdditionalFields = function() {
-    var additionalFields = $('<div></div>');
-
-    var additionalNotes = $('<textarea name="additionalNotes" cols="50" rows="10" ></textarea>');
-    additionalNotes.addClass('docAttribute');
-    var labelNotes = $("<label></label>");
-    labelNotes.append("Notes: ");
-    labelNotes.append(additionalNotes);
-
-    var additionalUrl = $('<input type="text" name="additionalUrl" />');
-    additionalUrl.addClass('docAttribute');
-    var labelUrl = $("<label></label>");
-    labelUrl.append("URL: ");
-    labelUrl.append(additionalUrl);
-
-    var additionalFile = $('<input type="file" name="_attachments" />');
-    additionalFile.addClass('docAttachments');
-    var labelFile = $("<label></label>");
-    labelFile.append("File: ");
-    labelFile.append(additionalFile);
-
-    additionalFields.append("<br />");
-    additionalFields.append(labelNotes);
-    additionalFields.append("<br />");
-    additionalFields.append(labelUrl);
-    additionalFields.append("<br />");
-    additionalFields.append(labelFile);
-
-    return additionalFields;
-};
-
-var generateEntry = function(entryType) {
-    var revAttribute = $('<input type="hidden" name="_rev" />');
-    revAttribute.addClass('docAttribute');
-
-    var ownerAttribute = $('<input type="hidden" name="owner" />');
-    ownerAttribute.addClass('docAttribute');
-    ownerAttribute.val($currentUser);
-
-    var typeAttribute = $('<input type="hidden" name="type" />');
-    typeAttribute.addClass('docAttribute');
-    typeAttribute.val(entryType.type);
-
-    var entryDetails = $('<div></div>');
-    entryDetails.attr("id", "entryDetailsFor" + entryType.type);
-    entryDetails.append($('<p></p>').append(entryType.description));
-    entryDetails.append(typeAttribute);
-    entryDetails.append(ownerAttribute);
-//    entryDetails.append(revAttribute);
-
-    $.each(entryType.attributes.mandatory, function(fieldname, fieldlabel) {
-        var inputField = $('<input type="text" name="' + fieldname + '" />');
-        inputField.addClass('docAttribute');
-        inputField.addClass('mandatoryField');
-
-        var label = $("<label></label>");
-        label.append(fieldlabel + ": ");
-        label.append(inputField);
-
-        entryDetails.append("<br />");
-        entryDetails.append(label);
-    });
-
-    $.each(entryType.attributes.optional, function(fieldname, fieldlabel) {
-        var inputField = $('<input type="text" name="' + fieldname + '" />');
-        inputField.addClass('docAttribute');
-        inputField.addClass('optionalField');
-
-        var label = $("<label></label>");
-        label.append(fieldlabel + ": ");
-        label.append(inputField);
-
-        entryDetails.append("<br />");
-        entryDetails.append(label);
-    });
-    return entryDetails;
-};
-
 var refreshEntries = function() {
     $('div#bibliography').empty();
     $('div#createNewEntry').hide();
@@ -111,7 +22,21 @@ var refreshEntries = function() {
                             && attributeName != "_rev"
                             && attributeName != "owner"
                             && attributeName != "type") {
-                            properties.append($('<li></li>').append(attributeName + ": " + entry[attributeName]));
+                            var attributeElement = $('<li></li>');
+                            if ("_attachments" == attributeName) {
+                                attributeElement.html("Attachments:");
+                                var attachments = $('<ul></ul>');
+                                $.each(Object.keys(entry[attributeName]), function(index, attachmentName) {
+                                    var attachmentLink = $('<a></a>');
+                                    attachmentLink.html(attachmentName);
+                                    attachmentLink.attr('href', $db.uri + $.couch.encodeDocId(entry._id) + '/' + attachmentName);
+                                    attachments.append($('<li></li>').append(attachmentLink));
+                                });
+                                attributeElement.append(attachments);
+                            } else {
+                                attributeElement.append(attributeName + ": " + entry[attributeName]);
+                            }
+                            properties.append(attributeElement);
                         }
                     });
                     rowItem.append(properties);
@@ -143,6 +68,27 @@ var onUserLoggedOut = function() {
     refreshEntries();
 };
 
+var submitAttachments = function(JSONdoc) {
+    var attachments = $('div#entryContainer input.docAttachments');
+    if (attachments.size() > 0) {
+        var attachmentForm = $('<form style="display: none;" action="" id="attachmentUploadForm"></form>');
+        attachments.each(function() {
+            attachmentForm.append($(this));
+        });
+        attachmentForm.append('<input type="hidden" name="_rev" value="' + JSONdoc._rev + '" />');
+        var options = {
+            url: $db.uri + $.couch.encodeDocId(JSONdoc._id),
+            type: 'post',
+            dataType: 'json'
+        };
+        attachmentForm.submit(function() {
+            $(this).ajaxSubmit(options);
+            return false;
+        });
+        attachmentForm.submit();
+    }
+};
+
 $(document).ready(function() {
 
     $db = $.couch.db("bib");
@@ -159,7 +105,7 @@ $(document).ready(function() {
                 onUserLoggedOut();
             }
         },
-        error: function(data) {
+        error: function() {
             $currentUser = undefined;
             onUserLoggedOut();
         }
@@ -167,25 +113,25 @@ $(document).ready(function() {
 
     initializeSelections();
 
-    $('a#link_createNewEntry').live('click', function(evt) {
+    $('a#link_createNewEntry').live('click', function() {
         $('#saveResult').empty();
         $('div#createNewEntry').fadeIn();
         $('select#selectEntryType').val("Default");
         $('select#selectEntryType').trigger('change', $('select#selectEntryType').val());
     });
 
-    $('input#cancelNewEntry').live('click', function(evt) {
+    $('input#cancelNewEntry').live('click', function() {
         $('div#createNewEntry').hide();
     });
 
-    $('select#selectEntryType').live('change', function(evt) {
+    $('select#selectEntryType').live('change', function() {
 
         var entryContainer = $('form#newEntry div#entryContainer');
         entryContainer.empty();
 
         var newEntryTypeSelection = $(this).val();
         if ('Default' != newEntryTypeSelection) {
-            entryContainer.append(generateEntry(entryTypes[newEntryTypeSelection]));
+            entryContainer.append(generateEntry(entryTypes[newEntryTypeSelection], $currentUser));
             entryContainer.append(generateAdditionalFields());
 
             $('div#entryButtons').fadeIn();
@@ -196,10 +142,8 @@ $(document).ready(function() {
         evt.preventDefault();
 
         var JSONdoc = {};
-//        JSONdoc._id = undefined;
-//        JSONdoc.owner = $currentUser;
 
-        var docAttributes = $('div#entryContainer input.docAttribute');
+        var docAttributes = $('div#entryContainer .docAttribute');
         docAttributes.each(function() {
             var docAttribute = $(this);
             var attributeName = docAttribute.get(0).name;
@@ -213,27 +157,7 @@ $(document).ready(function() {
 
                 $('#saveResult').append('<p>document ' + JSONdoc._id + ' was successfully created, uploading attachments...</p>');
                 $('#saveResult').fadeIn();
-
-                var attachments = $('div#entryContainer input.docAttachments');
-                if (attachments.size() > 0) {
-                    var attachmentForm = $('<form style="display: none;" action="" id="attachmentUploadForm"></form>');
-                    $('div#createNewEntry').append(attachmentForm);
-                    attachments.each(function(index, entry) {
-                        attachmentForm.append($(this));
-                    });
-                    attachmentForm.append('<input type="hidden" name="_rev" value="' + JSONdoc._rev + '" />');
-                    var options = {
-                        url: $db.uri + $.couch.encodeDocId(JSONdoc._id),
-                        type: 'post',
-                        dataType: 'json'
-                    };
-                    attachmentForm.submit(function() {
-                        $(this).ajaxSubmit(options);
-                        return false;
-                    });
-                    attachmentForm.submit();
-                }
-
+                submitAttachments(JSONdoc);
                 $('#saveResult').empty();
                 $('#saveResult').append('<p>document ' + JSONdoc._id + ' was successfully updated</p>');
 
