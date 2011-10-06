@@ -1,6 +1,65 @@
 var $db = '';
 var $currentUser = undefined;
 
+var onEdit = function(entryId, entryRev) {
+    // TODO
+};
+
+var onDelete = function(entryId, entryRev) {
+    $db.removeDoc({_id: entryId, _rev: entryRev}, {
+        success: function() {
+            refreshEntries();
+        }
+    });
+};
+
+var createRowItem = function(entry) {
+    var rowItem = $('<li></li>');
+    rowItem.append('<input type="hidden" class="docID" id="bibEntry_' + entry._id + '" value="' + entry._id + '" />');
+    rowItem.append('<h2 id="headerFor' + entry._id + '">' + entry.type + ' ' + entry._id + '</h2>');
+    rowItem.append('&nbsp;');
+    rowItem.append($('<a href="#edit">edit</a>').click(function() {
+        onEdit(entry._id, entry._rev);
+    }));
+    rowItem.append('&nbsp;');
+    rowItem.append($('<a href="#delete">delete</a>').click(function() {
+        if (confirm('Delete entry?')) {
+            onDelete(entry._id, entry._rev);
+        }
+    }));
+    var properties = $('<ul id="propertiesFor' + entry._id + '"></ul>');
+    properties.hide();
+    $.each(Object.keys(entry), function(index, attributeName) {
+        if (attributeName != "_id"
+            && attributeName != "_rev"
+            && attributeName != "owner"
+            && attributeName != "type") {
+            var attributeElement = $('<li></li>');
+            if ("_attachments" == attributeName) {
+                attributeElement.html("Attachments:");
+                var attachments = $('<ul></ul>');
+                $.each(Object.keys(entry[attributeName]), function(index, attachmentName) {
+                    var attachmentLink = $('<a></a>');
+                    attachmentLink.html(attachmentName);
+                    attachmentLink.attr('href', $db.uri + $.couch.encodeDocId(entry._id) + '/' + attachmentName);
+                    attachments.append($('<li></li>').append(attachmentLink));
+                });
+                attributeElement.append(attachments);
+            } else {
+                attributeElement.append(attributeName + ": " + entry[attributeName]);
+            }
+            properties.append(attributeElement);
+        }
+    });
+    rowItem.append(properties);
+
+    $('#headerFor' + entry._id).live('click', function() {
+        $('#propertiesFor' + entry._id).toggle();
+    });
+
+    return rowItem;
+};
+
 var refreshEntries = function() {
     $('div#bibliography').empty();
     $('div#createNewEntry').hide();
@@ -11,38 +70,12 @@ var refreshEntries = function() {
         $('a#link_createNewEntry').show();
         $db.list("bibliography/bibliography", "bibliography", {
             success: function(data) {
+                var entries = $('<ul></ul>');
                 $.each(data.rows, function(index, row) {
-                    var entry = row.value;
-                    var rowItem = $('<li></li>');
-                    rowItem.append('<input type="hidden" class="docID" id="bibEntry_' + entry._id + '" value="' + entry._id + '" />');
-                    rowItem.append('<h2>' + entry.type + '</h2>');
-                    var properties = $('<ul></ul>');
-                    $.each(Object.keys(entry), function(index, attributeName) {
-                        if (attributeName != "_id"
-                            && attributeName != "_rev"
-                            && attributeName != "owner"
-                            && attributeName != "type") {
-                            var attributeElement = $('<li></li>');
-                            if ("_attachments" == attributeName) {
-                                attributeElement.html("Attachments:");
-                                var attachments = $('<ul></ul>');
-                                $.each(Object.keys(entry[attributeName]), function(index, attachmentName) {
-                                    var attachmentLink = $('<a></a>');
-                                    attachmentLink.html(attachmentName);
-                                    attachmentLink.attr('href', $db.uri + $.couch.encodeDocId(entry._id) + '/' + attachmentName);
-                                    attachments.append($('<li></li>').append(attachmentLink));
-                                });
-                                attributeElement.append(attachments);
-                            } else {
-                                attributeElement.append(attributeName + ": " + entry[attributeName]);
-                            }
-                            properties.append(attributeElement);
-                        }
-                    });
-                    rowItem.append(properties);
-
-                    $('div#bibliography').append(rowItem);
+                    var rowItem = createRowItem(row.value);
+                    entries.append(rowItem);
                 });
+                $('div#bibliography').append(entries);
             }
         });
     }
