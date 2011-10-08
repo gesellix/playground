@@ -101,6 +101,13 @@ var onUserLoggedOut = function() {
     refreshEntries();
 };
 
+var onDocumentSaved = function(JSONdoc) {
+    refreshEntries();
+    $('#saveResult').empty();
+    $('#saveResult').append('<p>document ' + JSONdoc._id + ' was successfully updated</p>');
+    $('#saveResult').toggle();
+};
+
 var submitAttachments = function(JSONdoc) {
     var attachments = $('div#entryContainer input.docAttachments');
     if (attachments.size() > 0) {
@@ -112,14 +119,19 @@ var submitAttachments = function(JSONdoc) {
         var options = {
             url: $db.uri + $.couch.encodeDocId(JSONdoc._id),
             type: 'post',
-            dataType: 'json'
+            dataType: 'json',
+            success: function() {
+                onDocumentSaved(JSONdoc);
+            }
         };
         attachmentForm.submit(function() {
             $(this).ajaxSubmit(options);
             return false;
         });
         attachmentForm.submit();
+        return true;
     }
+    return false;
 };
 
 $(document).ready(function() {
@@ -189,16 +201,14 @@ $(document).ready(function() {
                 $('div#entryButtons').hide();
 
                 $('#saveResult').append('<p>document ' + JSONdoc._id + ' was successfully created, uploading attachments...</p>');
-                $('#saveResult').fadeIn();
-                submitAttachments(JSONdoc);
-                $('#saveResult').empty();
-                $('#saveResult').append('<p>document ' + JSONdoc._id + ' was successfully updated</p>');
-
-                refreshEntries();
+                $('#saveResult').toggle();
+                if (!submitAttachments(JSONdoc)) {
+                    onDocumentSaved(JSONdoc);
+                }
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 $('#saveResult').append('<p>Error updating document ' + JSONdoc._id + ': ' + jqXHR + ' ' + textStatus + ' - ' + errorThrown + '</p>');
-                $('#saveResult').fadeIn();
+                $('#saveResult').toggle();
             }
         });
     });
