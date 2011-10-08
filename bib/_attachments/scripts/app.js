@@ -3,6 +3,11 @@ var $currentUser = undefined;
 
 var onEdit = function(entryId, entryRev) {
     // TODO
+//    $db.openDoc(entryId, {
+//        success: function(doc) {
+//
+//        }
+//    });
 };
 
 var onDelete = function(entryId, entryRev) {
@@ -170,7 +175,6 @@ $(document).ready(function() {
     });
 
     $('select#selectEntryType').live('change', function() {
-
         var entryContainer = $('form#newEntry div#entryContainer');
         entryContainer.empty();
 
@@ -200,7 +204,7 @@ $(document).ready(function() {
             success: function(doc) {
                 $('div#entryButtons').hide();
 
-                $('#saveResult').append('<p>document ' + JSONdoc._id + ' was successfully created, uploading attachments...</p>');
+                $('#saveResult').append('<div class="spinner"><p>document ' + JSONdoc._id + ' was successfully created, uploading attachments...</p></div>');
                 $('#saveResult').toggle();
                 if (!submitAttachments(JSONdoc)) {
                     onDocumentSaved(JSONdoc);
